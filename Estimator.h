@@ -34,6 +34,8 @@ class Estimator
       vector< vector<double> > p_scatter;
       vector<double> vSigt, nu_vSigf, chi;
       vector< vector<double> > vSigs;
+
+      vector< vector<double> > trmm;
 };
 
 

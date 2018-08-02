@@ -27,16 +27,16 @@ int main()
    vector<double> Sigt, Sigc, Sigf, Sigs1, Sigs2, Sigst, chi, v; 
    Sigt.push_back(1.0);
    Sigt.push_back(1.0);
+   Sigc.push_back(0.2);
    Sigc.push_back(0.3);
-   Sigc.push_back(0.4);
    Sigs1.push_back(0.1); //1->1
    Sigs1.push_back(0.6); //1->2
-   Sigs2.push_back(0.1); //2->1
+   Sigs2.push_back(0.0); //2->1
    Sigs2.push_back(0.5); //2->2
    Sigst.push_back(Sigs1.at(0) + Sigs1.at(1));
    Sigst.push_back(Sigs2.at(0) + Sigs2.at(1));   
-   Sigf.push_back(0.0);
-   Sigf.push_back(0.0);
+   Sigf.push_back(0.1);
+   Sigf.push_back(0.2);
    chi.push_back(1.0);
    chi.push_back(0.0);
    v.push_back(2.0);

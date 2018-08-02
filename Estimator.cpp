@@ -87,7 +87,6 @@ void Estimator::tally_fission(int cur_group)
    
    num_collisions.at(cur_group) += 1;
    num_fissions.at(cur_group) += 1;
-   total_num_fissions += 0;
 }
 
 void Estimator::tally_emission(int dest_group)
@@ -102,13 +101,13 @@ void Estimator::tally_emission(int dest_group)
    }
 
    num_emissions.at(dest_group) += 1;
+   total_num_fissions += 1;
 }
 
 void Estimator::end_tally()
 {
    for(int i = 0; i < num_groups; i++)
    {
-      cout << "num_coll" << num_collisions.at(i) << endl;
       p_collision.push_back(num_collisions.at(i) / num_hist);
       nu_p_fission.push_back(num_fissions.at(i) * nu_bar / num_hist);
       p_emission.push_back(num_emissions.at(i) / total_num_fissions);
@@ -126,7 +125,7 @@ void Estimator::end_tally()
       double imt = inv_mean_time.at(i);
       vSigt.push_back(p_collision.at(i) * imt);
       nu_vSigf.push_back(nu_p_fission.at(i) * imt);
-      chi.push_back(p_emission.at(i) * imt);
+      chi.push_back(p_emission.at(i));
       vector<double> temp;
       for(int j = 0; j < num_groups; j++)
       {
@@ -134,6 +133,20 @@ void Estimator::end_tally()
       }
       vSigs.push_back(temp);
    }
+
+   //CALC TRMM
+   for(int i = 0; i < num_groups; i++)
+   {
+      vector<double> trmm_row;
+      for(int j = 0; j < num_groups; j++)
+      {
+         trmm_row.push_back(nu_vSigf.at(i)*chi.at(j));
+         trmm_row.at(j) += vSigs.at(i).at(j);
+         if(i == j)
+            trmm_row.at(j) -= vSigt.at(j);
+      }    
+      trmm.push_back(trmm_row);
+   } 
 }
 
 void Estimator::output()
@@ -154,7 +167,9 @@ void Estimator::output()
          cout << "G" << i+1 << "->" << j+1 << ": " << vSigs.at(i).at(j) << endl;
       }
    }
-   
+
+   cout << endl;
+
    cout << "nu_vSigf:" << endl;
    for(int i = 0 ; i < num_groups; i++)
    {
@@ -170,4 +185,14 @@ void Estimator::output()
    }
 
    cout << endl;
+
+   cout << "TRMM:" << endl;
+   for(int i = 0 ; i < num_groups; i++)
+   {
+      for(int j = 0; j < num_groups; j++)
+      {
+         cout << trmm.at(i).at(j) << " ";
+      }
+      cout << endl;
+   }
 }
