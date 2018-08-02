@@ -13,15 +13,15 @@ TEST_CASE( "Material (pure absorber)", "[Material]" )
    double x = 1.0;
    double mu = 0.5;
    
-   shared_ptr<Particle> theParticle = make_shared<Particle>(group, x, mu);   
+   Particle theParticle(group, x, mu);   
    
-   stack< shared_ptr<Particle> > pstack;
+   stack<Particle> pstack;
    
    pstack.push(theParticle);   
 
-   InfSlab slab(num_groups); 
+   Estimator est(num_groups, 1, 2.3); 
 
-   vector<double> sigt, sigc, sigf, sigst, chi;
+   vector<double> sigt, sigc, sigf, sigst, chi, v;
    vector< vector<double> > sigs; 
    double nu_bar = 2.3;
 
@@ -40,6 +40,9 @@ TEST_CASE( "Material (pure absorber)", "[Material]" )
    chi.push_back(1.0);
    chi.push_back(0.0);
 
+   v.push_back(1.0);
+   v.push_back(1.0);
+
    vector<double> sigs1, sigs2;
    
    sigs1.push_back(0.0);
@@ -50,23 +53,23 @@ TEST_CASE( "Material (pure absorber)", "[Material]" )
    sigs.push_back(sigs1);
    sigs.push_back(sigs2);
 
-   Material theMaterial(num_groups, sigt, sigc, sigst, sigs, sigf, nu_bar, chi);
+   Material theMaterial(num_groups,v, sigt, sigc, sigst, sigs, sigf, nu_bar, chi);
    
    
    
    // test detects that the particle is dead
    SECTION( " fast neutrons in a pure absorber are killed after a collision " )
    {
-       theMaterial.collision(theParticle, slab, pstack);
-       REQUIRE( theParticle->alive == false );
+       theMaterial.collision(theParticle, pstack, est);
+       REQUIRE( theParticle.alive == false );
    } 
 
    // test detects that the particle is dead
    SECTION( " slow neutrons in a pure absorber absorb " )
    {
-      theParticle->group = 1;
-      theMaterial.collision(theParticle, slab, pstack);
-      REQUIRE( theParticle->alive == false );
+      theParticle.group = 1;
+      theMaterial.collision(theParticle, pstack, est);
+      REQUIRE( theParticle.alive == false );
    }
 
 }

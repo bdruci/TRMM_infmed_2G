@@ -2,7 +2,7 @@
 
 double fRand(double fMin, double fMax)
 {
-   double f = (double)rand() / RAND_MAX;
+   double f = Urand();
    return fMin + f*(fMax-fMin);
 }
 

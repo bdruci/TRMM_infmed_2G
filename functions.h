@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <cmath>
+#include "Random.h"
 
 
 double fRand(double fMin, double fMax);
