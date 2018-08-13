@@ -1,41 +1,28 @@
 #include "Material.h"
 
-Material::Material(int num_groupsi, vector<double>& vi, vector<double>& sigti, vector<double>& sigci, vector<double>& sigsti, vector< vector<double> >& sigsi, vector<double>& sigfi, double nu_bari, vector<double>& chii): num_groups(num_groupsi), v(vi), sigt(sigti), sigc(sigci), sigst(sigsti), sigs(sigsi), nu_bar(nu_bari), sigf(sigfi), chi(chii)
+Material::Material(int num_groupsi, vector<double>& vi, vector<double>& sigti, vector<double>& sigci, vector<double>& sigsti, vector< vector<double> >& sigsi, vector<double>& sigfi, vector<double>& nui, double nu_bari, vector<double>& chii): num_groups(num_groupsi), v(vi), sigt(sigti), sigc(sigci), sigst(sigsti), sigs(sigsi), nu(nui), nu_bar(nu_bari), sigf(sigfi), chi(chii)
 {
-   //CREATE CDF FOR REACTION SELECTION
-   //
-
-
-   //CREATE CDF FOR SCATTER
+   //CREATE CDFs FOR REACTION SELECTION, SCATTER, CHI AND NU
    for(int i = 0; i < num_groups; i++)
    {
-	  double total = sigst.at(i);
-	  double sum = 0;
-	  vector<double> current_vector; 
-	  for(int j = 0; j < num_groups; j++)
-	  {
-		 sum += sigs.at(i).at(j);
-		 current_vector.push_back(sum / total);
-	  }       
-	  if(1.0 == Approx(sum / total)) //SET FINAL VALUE EQUAL TO 1, UNLESS THERE IS NO SCATTERING
-	  {
-		 current_vector.at(num_groups-1) = 1.0;
-	  }
-	  else if(total != 0.0)
-	  {
-		 cerr << "Scatter Cross Sections not configured properly.";
-		 cerr << "Each row of Sigs must add up to the corresponding element of sigst" << endl;
-		 exit(1);
-	  }
-	  scatter_cdf.push_back(current_vector); 
+      vector<double> rxn_xs;
+      rxn_xs.push_back(sigc.at(i));
+      rxn_xs.push_back(sigst.at(i));
+      rxn_xs.push_back(sigf.at(i));
+      reaction_dist.push_back(Distribution(rxn_xs,sigt.at(i)));
+
+      scatter_dist.push_back(Distribution(sigs.at(i),sigst.at(i))); 
    }
+   
+   chi_dist = Distribution(chi);
+   nu_dist  = Distribution(nu); 
 }
 
 
 bool Material::collision(Particle& p, stack<Particle>& pstack, Estimator& est)
 {
-   double randNum = fRand(0.0,1.0);
-   if(randNum < (sigc.at(p.group) / sigt.at(p.group)))
+   int index = reaction_dist.at(p.group).sample();
+   if(index == 0)
    {
         if(capture(p, pstack, est))
            return true;
@@ -45,7 +32,7 @@ bool Material::collision(Particle& p, stack<Particle>& pstack, Estimator& est)
            exit(1);
         }
    }
-   else if(randNum < ((sigc.at(p.group) + sigst.at(p.group)) / sigt.at(p.group)))
+   else if(index == 1)
    {
         if(scatter(p, pstack, est))
            return true;
@@ -55,7 +42,7 @@ bool Material::collision(Particle& p, stack<Particle>& pstack, Estimator& est)
            exit(1);
         }
    }
-   else 
+   else if(index == 2)
    {
         if(fission(p, pstack, est))
            return true;
@@ -64,6 +51,12 @@ bool Material::collision(Particle& p, stack<Particle>& pstack, Estimator& est)
            cout << "Error in Fission. Exiting." << endl;
            exit(1);
         }
+   }
+   else
+   {
+      cerr << "Error in Material::Collision. Index not found. Index was " << index << "." << endl;
+      cerr << "Exiting..." << endl;
+      exit(1);
    }
 }
 
@@ -90,21 +83,9 @@ bool Material::scatter(Particle& p, stack<Particle>& pstack, Estimator& est)
    
 
    //select destination energy
-   int g = p.group; //makes notation easier
+   int dest_group = scatter_dist.at(p.group).sample();
 
-   vector<double> sigsg = sigs.at(g);
-   int dest_group = 0;
-   double r = Urand();
-   double total = 0;
-   for( ; dest_group < num_groups ; dest_group++)
-   {
-      if(r < scatter_cdf.at(g).at(dest_group))
-      {
-         break;
-      }
-   }
-
-   if(dest_group == num_groups)
+   if(dest_group >= num_groups || dest_group < 0)
       return false;
    
    est.tally_scatter(p.group, dest_group);
@@ -112,48 +93,48 @@ bool Material::scatter(Particle& p, stack<Particle>& pstack, Estimator& est)
    return true;
 }
 
-//REDO:
 bool Material::fission(Particle& p, stack<Particle>& pstack, Estimator& est)
 {
    //Check to see if particle is alive
    if(!p.alive)
       return false;
    
-   //select number of particles to be created 
-   int num_neutrons = (int)(nu_bar + Urand()); //TODO: MAKE INTO A PDF
-
-   //Kill initial particle
    est.tally_fission(p.group);
-   p.alive = false;
+
+   //select number of particles to be created 
+   int num_neutrons = nu_dist.sample();
+
+   if(num_neutrons == 0)
+   {
+      p.alive == false; 
+      return true;
+   }
+
+   //remove initial particle
+   pstack.pop();
+ 
 
    //add new particles to the stack
-   for(int i = 0; i < num_neutrons; i++) //TODO: CDF, COPY CONSTRUCTOR
+   for(int i = 0; i < num_neutrons-1; i++) //use the already made particle as last fission particle
    {
-      double mu = fRand(-1.0,1.0); //isotropic
-      int dest_group = -1;
-      double total = 0;
-      double r = fRand(0.0,1.0);
-      for(int j = 0; j < num_groups; j++)
-      {
-         if((r > total) && ( r < (total + chi.at(j)) ) )
-         {
-            dest_group = j;
-            break;
-         }
-         else
-         {
-            total += chi.at(j);
-         }
-      }
-      if(dest_group < 0 || dest_group >= num_groups)
-      {
-         cout << "group destination not found" << endl;
-         return false;
-      }
-      pstack.push(Particle(dest_group, p.x, mu));
-      est.tally_emission(dest_group);
+      Particle new_p = p;
+
+      //find destination group, pick random direction isotropically
+      new_p.group = chi_dist.sample();
+      new_p.mu = fRand(-1.0, 1.0);
+      
+      est.tally_emission(new_p.group);
+      
+      pstack.push(new_p); 
    }
-   
+
+   //find destination group, pick random direction isotropically
+   p.group = chi_dist.sample();
+   p.mu = fRand(-1.0, 1.0);
+      
+   est.tally_emission(p.group);
+      
+   pstack.push(p);
    return true;
 }
 

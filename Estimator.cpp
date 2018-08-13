@@ -109,7 +109,7 @@ void Estimator::end_tally()
    for(int i = 0; i < num_groups; i++)
    {
       p_collision.push_back(num_collisions.at(i) / num_hist);
-      nu_p_fission.push_back(num_fissions.at(i) * nu_bar / num_hist);
+      nu_p_fission.push_back(num_fissions.at(i) * nu_bar / num_hist );
       p_emission.push_back(num_emissions.at(i) / total_num_fissions);
       inv_mean_time.push_back(num_hist / time.at(i));
       vector<double> temp;

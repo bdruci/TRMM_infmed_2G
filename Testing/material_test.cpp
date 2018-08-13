@@ -21,7 +21,7 @@ TEST_CASE( "Material (pure absorber)", "[Material]" )
 
    Estimator est(num_groups, 1, 2.3); 
 
-   vector<double> sigt, sigc, sigf, sigst, chi, v;
+   vector<double> sigt, sigc, sigf, sigst, chi, v, nu;
    vector< vector<double> > sigs; 
    double nu_bar = 2.3;
 
@@ -52,8 +52,11 @@ TEST_CASE( "Material (pure absorber)", "[Material]" )
 
    sigs.push_back(sigs1);
    sigs.push_back(sigs2);
+ 
+   nu.push_back(0.0);
+   nu.push_back(1.0);
 
-   Material theMaterial(num_groups,v, sigt, sigc, sigst, sigs, sigf, nu_bar, chi);
+   Material theMaterial(num_groups,v, sigt, sigc, sigst, sigs, sigf, nu, nu_bar, chi);
    
    
    

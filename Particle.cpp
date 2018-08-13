@@ -2,6 +2,13 @@
 
 Particle::Particle(int groupi, double xi, double mui): group(groupi), x(xi), mu(mui), alive(true) {}
 
+Particle::Particle(const Particle& old_p)
+{
+   x = old_p.x;
+   mu = old_p.mu;
+   group = old_p.group;
+   alive = old_p.alive;
+}
 bool Particle::move(double distance)
 {
    if(alive)

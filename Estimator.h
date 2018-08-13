@@ -15,7 +15,8 @@ class Estimator
       Estimator(int, int, double);
 
       //variables
-      int num_groups, num_hist, nu_bar, total_num_fissions;
+      int num_groups, num_hist, total_num_fissions;
+      double nu_bar;
       vector<double> length, time, num_collisions, num_captures, num_fissions, num_emissions;
       vector< vector<double> > num_scatters;
 

@@ -7,7 +7,8 @@ class Particle
 {
    public:
       Particle(int, double, double);
-
+            
+      Particle(const Particle&);
       int group;
       double x, mu;
       bool alive;

@@ -8,6 +8,7 @@
 #include "Particle.h"
 #include "functions.h"
 #include "Catch.h"
+#include "Distribution.h"
 
 using std::vector;
 using std::stack;
@@ -18,14 +19,15 @@ class Material
 {
    public:
       //Constructor
-      Material(int, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector< vector<double> >&, vector<double>&, double, vector<double>&);
+      Material(int, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector< vector<double> >&, vector<double>&, vector<double>&, double, vector<double>&);
       
       //Variables
       int num_groups; //number of energy groups
-      vector<double> v, sigt, sigc, sigst, sigf, chi; //speed, total xs, capture xs, total scatter xs, fission xs, fission spectrum
+      vector<double> v, sigt, sigc, sigst, sigf, chi, nu; //speed, total xs, capture xs, total scatter xs, fission xs, fission spectrum
       vector< vector<double> > sigs;  //Scatter matrix. sigs.at(i) = [ sigsi->1, sigsi->2, ..., sigsi->G]
-	  vector< vector<double> > scatter_cdf; 
       double nu_bar; //average number of neutrons created per fission
+      Distribution  chi_dist, nu_dist;
+      vector<Distribution> reaction_dist, scatter_dist;
 
       //Methods
       bool collision(Particle&, stack<Particle>&, Estimator&);
